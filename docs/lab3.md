@@ -23,17 +23,11 @@ http -h localhost:9083/actuator/sbom | head -n1    # → 200 (on mgmt port)
 
 ## One config change
 
-```yaml
-server:
-  port: 8083
+```properties
+server.port=8083
 
-management:
-  server:
-    port: 9083       # ← actuator listens here instead
-  endpoints:
-    web:
-      exposure:
-        include: health,info,sbom
+management.server.port=9083            # ← actuator listens here instead
+management.endpoints.web.exposure.include=health,info,sbom
 ```
 
 Spring Boot spins up a **second servlet container** on `9083`. Actuators bind to that one. `/hello` stays on `8083`.

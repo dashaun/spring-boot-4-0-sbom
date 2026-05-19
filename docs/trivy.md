@@ -16,7 +16,7 @@ http --check-status --print=b -a admin:changeme GET \
   localhost:9084/actuator/sbom/application | trivy sbom -
 ```
 
-If Boot 4.0.5 has no current CVEs in the demo SBOM, point to an older artifact you've kept around for narrative effect — `trivy sbom <old-cdx.json>` from a 3.x build usually finds something.
+If Boot 4.0.6 has no current CVEs in the demo SBOM, point to an older artifact you've kept around for narrative effect — `trivy sbom <old-cdx.json>` from a 3.x build usually finds something.
 
 ---
 
@@ -70,4 +70,4 @@ Same pattern — the SBOM endpoint is just JSON.
 
 Notes:
 - This is the payoff slide — show the live trivy output if possible.
-- If there are no CVEs in a current Boot 4.0.5, show with an older lab artifact for narrative effect.
+- If there are no CVEs in a current Boot 4.0.6, show with an older lab artifact for narrative effect.

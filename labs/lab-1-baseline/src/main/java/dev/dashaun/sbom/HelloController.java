@@ -8,6 +8,6 @@ class HelloController {
 
     @GetMapping("/hello")
     String hello() {
-        return "Hello from lab-1-baseline. No SBOM here yet.";
+        return "Hello from lab-1-baseline. Production-ready: /actuator/health and /actuator/info are live.";
     }
 }

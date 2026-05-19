@@ -35,13 +35,10 @@ Tease the next section: "now that it's locked down, let's actually USE the SBOM.
 </dependency>
 ```
 
-```yaml
-spring:
-  security:
-    user:
-      name: admin
-      password: ${ACTUATOR_PASSWORD:changeme}
-      roles: ACTUATOR_ADMIN
+```properties
+spring.security.user.name=admin
+spring.security.user.password=${ACTUATOR_PASSWORD:changeme}
+spring.security.user.roles=ACTUATOR_ADMIN
 ```
 
 The role-based piece is what we'll enforce next.

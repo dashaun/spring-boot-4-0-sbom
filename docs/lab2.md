@@ -7,18 +7,18 @@
 `labs/lab-2-sbom/` — port `8082`
 
 Notes:
-**~8 min** — the "wow" moment. Stay in this lab a beat longer than the others.
+**~8 min** — the "wow" moment. Stay in this lab a beat longer than the others. Note how *small* the diff is now that Lab 1 already had actuator.
 
 ```bash
 # Start it (preflight already packaged):
 cd labs/lab-2-sbom && ./mvnw spring-boot:run
 
-# Live demo (HTTPie pretty-prints JSON — no jq needed for display):
+# Live demo (HTTPie pretty-prints JSON automatically):
 http localhost:8082/actuator/sbom
 http localhost:8082/actuator/sbom/application | jq '.bomFormat, (.components | length)'
 
-# Show the SBOM was embedded at BUILD time:
-unzip -l labs/lab-2-sbom/target/lab-2-sbom-0.0.1-SNAPSHOT.jar | grep sbom
+# Same jar -tvf as Lab 1 — but now the SBOM IS there:
+jar -tvf labs/lab-2-sbom/target/lab-2-sbom-0.0.1-SNAPSHOT.jar | grep -i sbom
 ```
 
 After the demo, pivot to the security problem: "this is on your public port."
@@ -27,14 +27,7 @@ After the demo, pivot to the security problem: "this is on your public port."
 
 ## The diff from Lab 1
 
-Two adds: a dependency and a plugin.
-
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-actuator</artifactId>
-</dependency>
-```
+**One plugin. One property.**
 
 ```xml
 <plugin>
@@ -43,39 +36,49 @@ Two adds: a dependency and a plugin.
 </plugin>
 ```
 
-The CycloneDX plugin is **version-managed by the Spring Boot parent** — no version declaration needed.
+The plugin is **version-managed by the Spring Boot parent** — no version declaration needed. It runs during `package` and embeds `META-INF/sbom/application.cdx.json` into the jar.
 
 ---
 
-## Expose the endpoint
+## The property change
 
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,sbom
+```properties
+# Lab 1 had:
+management.endpoints.web.exposure.include=health,info
+
+# Lab 2 has:
+management.endpoints.web.exposure.include=health,info,sbom
 ```
 
-That's the whole config change. Spring Boot's auto-configuration discovers the SBOM that the CycloneDX plugin embedded at `META-INF/sbom/application.cdx.json` and registers `/actuator/sbom`.
+That's it. Spring Boot auto-discovers the embedded SBOM and registers `/actuator/sbom`.
 
 ---
 
-## Build and run
+## Build and look inside
 
 ```bash
 cd labs/lab-2-sbom
 ./mvnw -DskipTests package
+
+# Same command as Lab 1 — different answer:
+jar -tvf target/lab-2-sbom-0.0.1-SNAPSHOT.jar | grep -i sbom
+#  ...  META-INF/sbom/application.cdx.json
+```
+
+The SBOM ships **inside** the jar. The actuator just exposes what the build put there.
+
+> No SBOM file on disk = no `/actuator/sbom`. The build step is the contract.
+
+---
+
+## Run and curl
+
+```bash
 java -jar target/lab-2-sbom-0.0.1-SNAPSHOT.jar
 ```
 
-Then:
-
 ```bash
 http localhost:8082/actuator/sbom
-# HTTP/1.1 200
-# Content-Type: application/vnd.spring-boot.actuator.v3+json
-#
 # {
 #     "ids": [ "application" ]
 # }
@@ -83,19 +86,6 @@ http localhost:8082/actuator/sbom
 http localhost:8082/actuator/sbom/application | jq '.bomFormat'
 # "CycloneDX"
 ```
-
----
-
-## What's actually in the jar?
-
-```bash
-unzip -l target/lab-2-sbom-0.0.1-SNAPSHOT.jar | grep sbom
-#  ...  META-INF/sbom/application.cdx.json
-```
-
-The SBOM ships **inside** the jar. The actuator just exposes what the build put there.
-
-> No SBOM file on disk = no `/actuator/sbom`. The build step is the contract.
 
 ---
 
