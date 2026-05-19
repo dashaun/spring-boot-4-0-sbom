@@ -1,0 +1,127 @@
+name: Verify presentation
+
+# Catches silent rot — Spring Boot patch releases, Trivy DB schema bumps,
+# CycloneDX plugin updates, JDK image refreshes, HTTPie or Maven changes —
+# any of which can break the demo months before the next conference.
+#
+# Runs the same .devcontainer/devcontainer.json the live demo uses, so what
+# passes here is what works on stage.
+
+"on":
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'labs/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - '.devcontainer/**'
+      - '.github/workflows/verify.yml'
+  pull_request:
+    paths:
+      - 'labs/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - '.devcontainer/**'
+      - '.github/workflows/verify.yml'
+
+permissions:
+  contents: read
+  issues: write   # auto-open issue on scheduled-run failure
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
+
+      - name: Run preflight + scan + docs probe inside devcontainer
+        uses: devcontainers/ci@v0.3
+        env:
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+        with:
+          imageName: spring-boot-4-sbom-verify
+          cacheFrom: spring-boot-4-sbom-verify
+          push: never
+          runCmd: ./scripts/ci-verify.sh
+
+      - name: Upload Trivy scan output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-${{ github.run_id }}
+          path: trivy-scan.txt
+          if-no-files-found: warn
+
+      # Only fires on scheduled or manual runs. PR failures already show up
+      # as failing checks; an extra issue would be noise, and PRs from forks
+      # can't open issues anyway.
+      - name: Open issue on failure
+        if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `Weekly preflight failed: ${today}`;
+            const body = [
+              `The scheduled verification workflow failed.`,
+              ``,
+              `**Run:** ${runUrl}`,
+              `**Trigger:** \`${context.eventName}\``,
+              ``,
+              `Likely causes: Spring Boot patch release, Trivy DB schema bump, CycloneDX plugin update, JDK image refresh, or an HTTPie/Maven change.`,
+              ``,
+              `Reproduce locally inside the devcontainer:`,
+              `\`\`\``,
+              `./scripts/ci-verify.sh`,
+              `\`\`\``,
+            ].join('\n');
+
+            // De-dup: if an open issue with the same label exists, comment on it
+            // instead of opening another. Keeps the dashboard clean during a
+            // multi-week breakage.
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'preflight-failure',
+            });
+
+            const match = existing.data.find(i => i.title.startsWith('Weekly preflight failed'));
+
+            if (match) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: match.number,
+                body: `Failed again on ${today} — ${runUrl}`,
+              });
+              core.info(`Commented on existing issue #${match.number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['preflight-failure'],
+                assignees: ['dashaun'],
+              });
+              core.info(`Opened issue #${created.data.number}`);
+            }

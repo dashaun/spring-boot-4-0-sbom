@@ -1,0 +1,30 @@
+# --- IDE / editor / OS ----------------------------------------------------
+.idea/
+.claude/
+.opencode/
+opencode.jsonc
+*.iml
+.DS_Store
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+
+# VS Code
+.vscode/
+
+# --- Build output ---------------------------------------------------------
+target/
+
+# --- Logs ----------------------------------------------------------------
+*.log
+
+# --- Runtime artifacts ---------------------------------------------------
+sbom-*.json
+trivy-report-*.json
+trivy-scan.txt
+.cache/
+.run-logs/

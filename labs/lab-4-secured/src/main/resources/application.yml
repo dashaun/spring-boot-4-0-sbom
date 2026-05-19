@@ -1,0 +1,19 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: lab-4-secured
+  security:
+    user:
+      name: admin
+      password: ${ACTUATOR_PASSWORD:changeme}
+      roles: ACTUATOR_ADMIN
+
+management:
+  server:
+    port: 9084
+  endpoints:
+    web:
+      exposure:
+        include: health,info,sbom
