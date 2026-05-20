@@ -1,11 +1,8 @@
 name: Verify presentation
 
 # Catches silent rot — Spring Boot patch releases, Trivy DB schema bumps,
-# CycloneDX plugin updates, JDK image refreshes, HTTPie or Maven changes —
+# CycloneDX plugin updates, JDK refreshes, HTTPie or Maven changes —
 # any of which can break the demo months before the next conference.
-#
-# Runs the same .devcontainer/devcontainer.json the live demo uses, so what
-# passes here is what works on stage.
 
 "on":
   schedule:
@@ -17,14 +14,12 @@ name: Verify presentation
       - 'labs/**'
       - 'scripts/**'
       - 'docs/**'
-      - '.devcontainer/**'
       - '.github/workflows/verify.yml'
   pull_request:
     paths:
       - 'labs/**'
       - 'scripts/**'
       - 'docs/**'
-      - '.devcontainer/**'
       - '.github/workflows/verify.yml'
 
 permissions:
@@ -43,6 +38,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Install HTTPie
+        run: sudo apt-get update && sudo apt-get install -y httpie
+
+      - name: Install Trivy
+        run: wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+
       - name: Cache Trivy DB
         uses: actions/cache@v4
         with:
@@ -51,15 +58,10 @@ jobs:
           restore-keys: |
             trivy-db-${{ runner.os }}-
 
-      - name: Run preflight + scan + docs probe inside devcontainer
-        uses: devcontainers/ci@v0.3
+      - name: Run preflight + scan + docs probe
         env:
           TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
-        with:
-          imageName: spring-boot-4-sbom-verify
-          cacheFrom: spring-boot-4-sbom-verify
-          push: never
-          runCmd: ./scripts/ci-verify.sh
+        run: ./scripts/ci-verify.sh
 
       - name: Upload Trivy scan output
         if: always()
@@ -86,9 +88,9 @@ jobs:
               `**Run:** ${runUrl}`,
               `**Trigger:** \`${context.eventName}\``,
               ``,
-              `Likely causes: Spring Boot patch release, Trivy DB schema bump, CycloneDX plugin update, JDK image refresh, or an HTTPie/Maven change.`,
+              `Likely causes: Spring Boot patch release, Trivy DB schema bump, CycloneDX plugin update, JDK refresh, or an HTTPie/Maven change.`,
               ``,
-              `Reproduce locally inside the devcontainer:`,
+              `Reproduce locally:`,
               `\`\`\``,
               `./scripts/ci-verify.sh`,
               `\`\`\``,

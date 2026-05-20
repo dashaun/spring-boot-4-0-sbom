@@ -16,8 +16,7 @@ URL="http://${MGMT_HOST}:${MGMT_PORT}/actuator/sbom/application"
 for tool in http trivy; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "ERROR: '$tool' is not installed or not on PATH." >&2
-        echo "       In the devcontainer both are pre-installed." >&2
-        echo "       On a host: HTTPie -> https://httpie.io   Trivy -> https://trivy.dev" >&2
+        echo "       Install: HTTPie -> https://httpie.io   Trivy -> https://trivy.dev" >&2
         exit 1
     fi
 done

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# ci-verify.sh — full end-to-end verification of the demo, designed to run
-# inside the devcontainer (locally or via devcontainers/ci on GitHub Actions).
+# ci-verify.sh — full end-to-end verification of the demo. Expects java,
+# http (HTTPie), trivy, jq, and jwebserver on PATH. Used both locally and
+# by .github/workflows/verify.yml.
 #
 # Three phases:
 #   1. preflight.sh           — toolchain, ports, builds, smoke-tests, Trivy DB

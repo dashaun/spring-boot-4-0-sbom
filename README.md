@@ -6,14 +6,6 @@ A demo-heavy presentation repo that walks through generating a CycloneDX Softwar
 
 ## Quick start
 
-### Option A — GitHub Codespaces / Dev Container
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dashaun/spring-boot-4-sbom)
-
-The `.devcontainer/` brings JDK 25, Docker-in-Docker, and Trivy. No local setup required.
-
-### Option B — Local
-
 ```bash
 # JDK 25 + a recent Maven (the wrapper takes care of Maven)
 git clone https://github.com/dashaun/spring-boot-4-sbom

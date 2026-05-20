@@ -33,7 +33,6 @@
 git clone https://github.com/dashaun/spring-boot-4-sbom
 ```
 
-- **Codespaces ready** — JDK 25 + Trivy preinstalled.
 - **Four diff-able labs** — read in order or jump around.
 - **Slides + speaker notes** — `jwebserver -d "$(pwd)/docs" -p 8000`.
 

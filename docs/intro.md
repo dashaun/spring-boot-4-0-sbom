@@ -77,10 +77,8 @@ git clone https://github.com/dashaun/spring-boot-4-sbom
 cd spring-boot-4-sbom
 ```
 
-- **Codespaces ready** — `.devcontainer/` brings JDK 25, Docker-in-Docker, Trivy.
 - **Each lab is standalone** — `cd labs/lab-N && ./mvnw spring-boot:run`.
 - **Slides are the repo** — what you're reading is in `docs/`.
 
 Notes:
-- Hit the "Open in Codespaces" badge in the README for a zero-setup environment.
-- Local prerequisites are JDK 25 + a recent Maven (the wrapper handles Maven).
+- Prerequisites: JDK 25 + a recent Maven (the wrapper handles Maven), plus HTTPie and Trivy for the scan demo.
